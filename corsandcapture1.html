@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS and Capture Part 1: Self-Hosting a CORS Proxy</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #333;  /* Dark grey background */
+            color: #fff;  /* White text color */
+        }
+        p.center-block {
+            width: 75%;  /* or any width */
+            margin: auto;
+            text-align: center;
+            /* border: 1px solid black;  Optional, to visualize the block */
+            padding: 10px;  /* Optional, to add some space around the text */
+        }
+        .top-banner {
+            text-align: center;
+            position: relative;
+            height: 33.33vh; /* This sets the height of the banner to be 1/3 of the viewport height. */
+        }
+        .top-banner img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* This property causes the image to be scaled and cropped to fill the banner. */
+        }
+        .top-banner div {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            transform: translateY(-50%);
+            text-align: center;
+            color: #fff;
+        }
+        .navbar {
+            background-color: #333;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .navbar a {
+            float: left;
+            display: block;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+        .navbar a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+        .code-snippet {
+            width: 66%;
+            margin: auto;
+            border: 1px solid black;
+            padding: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: #333;  /* Dark grey background */
+            color: #fff;  /* White text color */
+        }
+        .code-snippet code .comment {
+            color: #008000;  /* Green color for comments */
+        }
+        .content {
+            width: 100%;
+            text-align: center; /* Added this to center all text within the content div */
+        }
+        .article-image {
+            width: 25%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-banner">
+        <img src="assets/straylight.jpg" alt="Banner Image">
+        <div>
+            <h1>CORS and Capture Part 1: Self-Hosting a CORS Proxy for Device Code Phishing</h1>
+        </div>
+    </div>
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="red.html">Red</a>
+        <a href="blue.html">Blue</a>
+        <a href="cloud.html">Cloud</a>
+        <a href="code.html">Code</a>
+        <a href="posts.html">Posts</a>
+    </div>
+    <div class="content">
+        <img class="article-image" src="assets/corsandcapture1-final.png" alt="Article Image">
+        <h2>The Goal</h2>
+        <p class="center-block">
+            I decided to focus on device codes as a reliable means of initial access and spent a lot of time working out ways to make it more flexible. Generated device codes only live for 15 minutes and it became clear fairly quickly that this limitation was worth stopping what I was doing and taking the time to get a better solution in place. 
+        If we can get an access token for the MS Graph, we can use that token to create a Primary Refresh Token for that user. Access tokens are short lived but are refreshed by…you guesed it. With a PRT in hand, we can then refresh our token to each service in O365 that we want to interact with, i.e. Teams, EXO, Sharepoint and loot whatever want. 
+        This makes automation a breeze and there's a loot script here you can use. Access may be short lived in an environment with sharp analysts or good automation so the goal is to get a long lasting PRT and as much org recon and user data as possible. 
+        If you're wondering what all these tokens we're talking about are you can check out <a href="https://learn.microsoft.com/en-us/azure/active-directory/devices/concept-primary-refresh-token">this PRT Documentation</a> which should get you up to speed.
+        </p>
+        
+        <h2>The Problem</h2>
+        <p class="center-block">
+        Device codes are only active for 15 minutes, which means our lures are short-lived or the user has to request another code from us. We have been using a template in Outlook and sending it to individual users. We will try to make that work, and will explore hosting the lure as a landing page. This gives the added benefit of tracking click-rate even if the user chooses not to enter the code.</p>
+        </p>
+
+        <h2>The Template</h2>
+        <p class="center-block">
+            If you open your lure in VS Code and install the  live server extension:
+            <img class="article-image" src="assets/cors/server1.png" alt="Live Server">    
+            <p></p>    
+            You can render the page and copy it to create an outlook template.Copy and paste it into a new outlook message, populate the subject and sender if you'd like then 'Save As' Outlook Template file:</p>
+            <img class="article-image" src="assets/cors/bluebeam1.png" alt="Bluebeam Lure">
+            <p></p>
+            <img class="article-image" src="assets/cors/template1.png" alt="Bluebeam Template">
+            <p></p>
+        </p>
+
+        <p class="center-block">
+            My flow had been to set up three copies of my template, populate the target emails, start a script to trigger a device code and send it to all three targets at the same time. If a user entered the code the script would loot the users email and run all the azure recon I was interested in MelloSec/PhirstPhish (github.com). 
+            What I gained in time back was worth the risk of more than one user taking that bait (which never occurred) but this workflow still relies on time of day and people being at their computer, not doing much and and motivated to check it out immediately. 
+            <img class="article-image" src="assets/cors/template2.png" alt="Bluebeam Template">
+        </p>
+        <p class="center-block"> While working on the write-up, I noticed the grammar correction markup on the template. You should clean this up, and I should, too.
+            You can select to ignore them or add specific words so they don't show up in your targets email. The same principals you'd use for your own business communication should apply to your phishing emails, too.</p>
+            <p></p>
+            <img class="article-image" src="assets/cors/template3.png" alt="Bluebeam Template">
+            <img class="article-image" src="assets/cors/template4.png" alt="Bluebeam Template">
+            <img class="article-image" src="assets/cors/template5.png" alt="Bluebeam Template">
+            <p></p>
+        </p>
+
+        <h2>The Idea</h2>
+        <p class="center-block">
+            Steve Borosh and Bobby Cooke have done a lot of work in this direction and I once again found myself in the Token Tactics repository looking for inspiration. Steve posted a gist from Un1kod3r that would create the device code dyanmically. The app is called CORS-Anywhere and in the gist it's hosted on a decentralized Web3 cloud called Flux. There is a hosted version @ runonflux that worked but when I tried it out I was getting locations from all over. 
+            In the past this would have been fine but I've noticed Microsoft has locations and the application you're trying to sign into displayed to the user during the device login flow. Even without things like Conditional Access looking for location based anomalies, this type of signaling could get us in trouble.  I needed to be able to control the location and deploy to the cloud provider of my choosing near clients and this seemed like a great opportunity to learn something new.
+            <img class="article-image" src="assets/cors/corsanywhere.png" alt="Cors Anywhere"> 
+            <figcaption><i>Client was international but is not Baltic..</i></figcaption>
+            <p></p>
+        </p>
+        
+        <p class="center-block">
+            Self hosting the CORS Anywhere turned into a journey of its own and I made a couple of things to help everyone out. I adapted what I could find, modified some of the CORS-Anywhere source code and it's server. This is not secure by default, it's up to you to decide how to handle that. I'll show you how it works and I'll point out some things you can do.
+            <img class="article-image" src="assets/cors/corsanywhere2.png" alt="CORS Leak">
+            <figcaption><i>CORS server leaking information</i></figcaption>
+            <p></p>
+            With this in place we can proxy requests to the device code endpoint from our project/server and share the same Origin for all requests. 
+            What this gives us is a lure with a dynamically generated code embedded. Javascript reaches out to the oauth endpoint when the user opens the email and requests a code which is returned to them paired with the login url:
+            <img class="article-image" src="assets/cors/javascript1.png" alt="Javascript">
+            <figcaption><i>Requests a device code from the OAuth endpoint</i></figcaption>
+            <p></p>
+        </p>
+        <h2>The Why</h2>
+            <p class="center-block">
+                The purpose of the CORS proxy is to bypass the same-origin policy restrictions imposed by the browser when making cross-origin requests from our client-side JavaScript. The same-origin policy dictates that JavaScript running in a web page can only make requests to the same origin (domain, protocol, and port) from which the script was loaded. It is a security mechanism that prevents unauthorized access to resources and protects user data.
+                <p></p>
+                When you use this CORS proxy, the browser makes a request to the proxy server, which acts as an intermediary between the browser and the target server. The proxy server forwards the request to the target server on behalf of the browser. This way, the request appears to be originating from the same domain as the proxy server, bypassing the same-origin policy restrictions.
+                <p></p>
+                The response from the target server is then returned to the browser through the CORS proxy. The proxy server can add appropriate headers to the response to allow the browser to access the requested resource. It then polls the endpoint until it returns the users token and fires that off to our capture server, a flask app waiting to log the token and optionally start TokenTactics. 
+                <p></p>
+                The lure will contain something like this:
+                <p></p>
+                <img class="article-image" src="assets/cors/javascript2.png" alt="Javascript">
+                Which becomes:
+                <img class="article-image" src="assets/cors/devicecode.png" alt="device code">
+                <p></p>
+                The message can be customized to your pretext. We're using a separate EC2 instance to run the CORS Anywhere service  (and eventually the phishing page) on port 80/http and redirect the user to the device code flow. I'll tend to pose as company that would do business with the target and this would be a sharepoint/file subdomain or contractor portal. 
+                <p>
+                <a href="http://cors.trusteddomain.com/https://microsoft.com/devicelogin"> http://cors.trusteddomain.com/https://microsoft.com/devicelogin </a>
+                </p>
+                Where 'cors' is yours CORS app. If you have a high reputation domain this may help you sell the login process in your ruse.
+                <p></p>
+                Once the user signs in, this snippet retrieves the token and sends the code which we capture with a Flask app that logs them.
+                <img class="article-image" src="assets/cors/javascript3.png" alt="device code">
+                <figcaption><i>GET request to our Flask server with the 'id' param containing our captured data</i></figcaption>
+            </p>
+
+
+        <h2>Deploying to Azure</h2>
+        <p class="center-block">
+            
+            I'm a big fan of Infrastructure-as-Code and have included some scripts to deploy the resources you need.
+            Let's get something to work with, we need PowerShell, Azure CLI and the AWS CLI for later.
+            
+            <pre class="code-snippet">
+                <code>
+                    <span class="comment"># Update the list of packages</span>
+
+                    sudo apt-get update
+                    
+                    <span class="comment"># Install pre-requisite packages.</span>
+
+                    sudo apt-get install -y wget apt-transport-https software-properties-common azure-cli aws unzip
+                    
+                    <span class="comment"># Download the Microsoft repository GPG keys</span>
+
+                    wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+                    
+                    <span class="comment"># Register the Microsoft repository GPG keys</span>
+                    
+                    sudo dpkg -i packages-microsoft-prod.deb
+                    
+                    <span class="comment"># Update the list of packages after we added packages.microsoft.com</span>
+                    
+                    sudo apt-get update
+                    
+                    <span class="comment"># Install PowerShell</span>
+                    
+                    sudo apt-get install -y powershell
+            </code>
+        </pre>
+        <p></p>
+        We need an SSH key at ~/.ssh/id_rsa, it will use whatever is there during deployment. This script will create the resources needed in azure, the resource group, VM, networking, etc. 
+        <p></p>
+        The script takes parameters: 
+        <p></p>
+        <img class="article-image" src="assets/cors/powershell1.png" alt="Powershell Deploy">
+                <figcaption><i>Azure Resources to be Created</i></figcaption>
+                <p></p>
+        And uses the value of the variable to specify resources to create, open ports, etc:
+        <p></p>
+        <img class="article-image" src="assets/cors/powershell2.png" alt="Powershell Deploy">
+        <img class="article-image" src="assets/cors/powershell3.png" alt="Powershell Deploy">      
+        <p></p>
+        We use Azure's VM Run-Command feature to start configuring the server from the script:
+        <p></p>
+        <img class="article-image" src="assets/cors/powershell4.png" alt="Powershell Deploy"> 
+        <p></p>
+        This is really handy as an admin or engineer and especially so as an attacker. With the right misconfigurations or permissions, an attacker can run scripts and commands on hybrid or On-Prem devices with the right agents installed.
+        <p></p>
+        It will use letsencrypt to acquire a cert:
+        <p></p>
+        <img class="article-image" src="assets/cors/powershell5.png" alt="Powershell Deploy">
+        <p></p>     
+        Now kick off our script and sit back.
+        <p></p>
+        <pre class="code-snippet">
+            <code>
+                <span class="comment"># Sign in to Azure</span>
+                pwsh
+
+                az login
+
+                <span class="comment"># dot-source the script</span>
+                
+                .  .\capture-server\capture-deploy.ps1
+                
+                <span class="comment"># Call the function to deploy with your values</span>
+
+                Invoke-DeployCaptureServer -ResourceGroup CappaDonna -location eastus -vmName cappadonna -vmPublicDNSName cappadonna -pubKey ~/.ssh/id_rsa.pub
+                
+        </code>
+    </pre>
+    <p></p>
+    <img class="article-image" src="assets/cors/powershell6.png" alt="Powershell Deploy">
+    <p></p>
+    These resources will be created in Azure:
+    <p></p>
+    <img class="article-image" src="assets/cors/azure1.png" alt="Powershell Deploy">
+    <p></p>  
+    </p>
+
+
+        <h2>CORS Server and App</h2>
+        <p class="center-block">
+            Script will run and continue to run commands on the host to clone repos, open ports, acquires SSL certs and run the deployment script in the yourcors repo
+            <p></p>
+            <img class="article-image" src="assets/cors/azure2.png" alt="Powershell Deploy">
+            <p></p>
+            The CORS server is a Node app to serve the proxy. The server.js can white/black list, has rate limiting and can check for headers. Let's look at our modified code and break it down:
+            <p></p>
+            <img class="article-image" src="assets/cors/serverjs1.png" alt="NodeJS Server">
+            <p></p>
+            <pre class="code-snippet">
+                <code>
+                    1. Define the host and port for the CORS Anywhere server. The host is obtained from the HOST environment variable, defaulting to '0.0.0.0', and the port is obtained from the PORT environment variable, defaulting to 8080.
+
+                    2. It parses the CORSANYWHERE_BLACKLIST and CORSANYWHERE_WHITELIST environment variables to determine the origin blacklist and whitelist.
+                    
+                    3. It requires the rate-limit module and initializes the checkRateLimit function using the CORSANYWHERE_RATELIMIT environment variable.
+                    
+                    4. It creates a CORS Anywhere server with our custom required headers 'straylight' and 'security' using the cors-anywhere library, providing configuration options such as originBlacklist, originWhitelist, checkRateLimit, removeHeaders, and httpProxyOptions.
+                    
+                    5. The server is then started by calling the listen method, passing the port, host, and a callback function that logs the server's address.
+            </code>
+            <p></p>
+           
+        </pre>
+        <p></p>
+        I needed firewall rules open while developing this and decided to require a couple of headers to curb any abuse.
+        <img class="article-image" src="assets/cors/serverjs2.png" alt="NodeJS Server">
+        <p></p>
+        I'm showing you the modified version that is contained in the fork of CORS-Anywhere: https://github.com/mellosec/cors-anywhere. The original "server.js" and its help file are in a "references" folder in YOURCORS if you want to see what I changed and removed. The Help file was displayed as an HTTP response, though, it was a red flag we need to clear up. Using a proxy resolves the issue but it's completely removable if we look through the source. 
+        </p>
+
+
+        <h2>IoCs and Watermarks</h2>
+        <p class="center-block">
+            It's important to be mindful of what our tools look like to anyone paying attention. Scanners are always scanning under the watchful eye of ATP and other security products. Palo Alto for example:
+            <p></p>
+            <img class="article-image" src="assets/cors/paloalto1.png" alt="Palo Alto Scanner">
+            <p></p>
+            <img class="article-image" src="assets/cors/helptxt1.png" alt="Help.txt">
+            <p></p>
+            This used to display everytime you tried "/", which is not ideal. This would make it very clear this was a relay for scanners and shitheads, we removed this, added some unique headers and changed the port. This also allows us to "watermark" our campaign and provides a clear signal that it was us and not an actual attacker. 
+            I plan to add a reverse proxy (caddy) as well but one thing at a time. We've removed the tell tale sign, we're rate limiting, we're opting-out of using any white/black listing and set some custom headers for the api to check.
+            <p></p>
+            Now we can start the server using node.
+            <p></p>
+            <img class="article-image" src="assets/cors/serverjs3.png" alt="Help.txt">
+            <p></p>
+            Every request needs the headers now to work. Let's test it.
+            <p></p>
+            <pre class="code-snippet">
+                <code>
+                    <span class="comment"># Test if it's requiring anything to proxy</span>
+
+                    curl http://127.0.0.1:8080/
+
+                    <span class="comment"># Test without Headers</span>
+
+                    curl http://127.0.0.1:8080/https://s3cur3th1ssh1t.github.io/
+
+                    <span class="comment"># Give S3cur3Th1sSh1t some love</span>
+
+                    curl -H "straylight: value" -H "security: value" http://127.0.0.1:8080/https://s3cur3th1ssh1t.github.io/
+            </code>           
+        </pre>
+        <p></p>
+        <img class="article-image" src="assets/cors/curl1.png" alt="Curl Tests">
+        <p></p>
+        We can fix that the response telling anyone which headers it's looking for, right?
+        <p></p>
+        Of course we can, it's open source. The file we need to change is in /lib/cors-anywhere.js
+        <p></p>
+        <img class="article-image" src="assets/cors/corsjs1.png" alt="cors anywhere">
+        <p></p>
+        Let's comment out the old code and make our changes.
+        <img class="article-image" src="assets/cors/corsjs3.png" alt="cors anywhere">
+        <p></p>
+        The header information is stored in the variable corsAnywhere.requireHeader
+        By commenting out the original code we leave a record for handy reference and we make an edit that we will recognize but no one else will understand. You can't rely on security through obscurity but it doesn't hurt either. 
+        We can restart our server and move on to updating the lure itself.    
+    </p>
+
+
+
+
+        <h2>Updating the Lure</h2>
+        <p class="center-block">
+            Now we need to update the dynamic device page to use our headers. We do this by creating an options object instead of a url object. We store the headers we want in the object and I've added the "now" as the value for each to help with auditing. 
+            The values don't matter, our CORS server is only lookling for "straylight: and "security" but those current date and time will give us a nice timestamp.
+            <p></p>    
+            <img class="article-image" src="assets/cors/corsjs2.png" alt="cors anywhere">
+            To capture the access token, we'll use more javascript and have it return our access token to a simple Flask app running on the capture server:
+            <p></p>
+            <img class="article-image" src="assets/cors/captureserver1.png" alt="Capture Server">
+            <p></p>
+            This logs Get requests with "id?=" parameters and stores the arguments as our tokens. It can start powershell for you and pass it to to "capturetokenphish.ps1" a little scriptlet that's waiting to take the token and pass it to TokenTactics to refresh and store in the cache. I tend to just use them manually but it's here.  
+            You can add your SSL certificates here in "certs" folder as cert.pem and privkey.pem and it will server over HTTPs. Capture tokens appear in the visitor log:
+            <p></p>
+            <img class="article-image" src="assets/cors/captureserver2.png" alt="Capture Server">
+        </p>
+
+
+        <h2>But how do we use it?</h2>
+        <p class="center-block">
+            Once we have one, we can work with it straight from powershell.
+            We will use the captured code with TokeTactics and AADInternals. Save your token as a variable and use it like this:
+            <p></p>
+            <img class="article-image" src="assets/cors/token1.png" alt="Token">
+            <img class="article-image" src="assets/cors/token2.png" alt="Token">
+        
+        </p>
+
+
+        <h2>Stand And Deliver</h2>
+        <p class="center-block">
+            A new foe appeared, and it's sending raw html through Outlook Desktop. Now that we have a bunch of html and javascript doing this dynamically, we can't copy and paste from locally running live server like we were. Now we have to figure out how to send it another way. 
+            Like everything else in my life I'll try it with powershell first.
+            <p></p>
+            This post assumes you have your sending set up. I use Office 365, either via trials or dev tenants. You need to set up a custom domain, DNS records for SPF, DKIM, DMARC, etc. 
+            Setting that up is beyond but the scope of this article and is a valuable learning experience regardless of your focus in security.
+            <p></p>
+            If you need help check out this article with some terraform and powershell scripts in the repo provided to get up to speed quickly.
+            <p></p>
+            <img class="article-image" src="assets/cors/automated1.png" alt="DKIMPossbile">
+            <a href="https://blog.straylightsecurity.com/2023/06/04/dkimpossible-get-your-time-back/">DKIMPossible: Onboarding Custom Domains, DNS and mail records for O365 tenants (and a tool to help) – Straylight Security</a>
+            <p></p>
+            We're going to take what I showed you above and apply it here to send phishing emails from our own account with powershell. This snippet here is also a good demonstration of how you would acquire a token with TokenTactics and use it with AADInternals in general: 
+            <p></p>
+            <img class="article-image" src="assets/cors/graph1.png" alt="Graph Token">
+
+
+
+            <pre class="code-snippet">
+                <code>
+                    <span class="comment"> # Get your own access token and refresh it to Outlook </span>
+                    <span class="comment"> # Targeted User and YOUR domain here </span>
+                    $user = "victim@targeted.com"
+                    $domain = "trusteddomain.com"                
+
+                    <span class="comment"> # Get Graph Token with TokenTactics</span> 
+                    Get-AzureToken -Client Graph
+                    $access = $response.access_token          # $response object contains $access
+                    $refresh = $response.refresh_token        # and $refresh token
+                    Add-AADIntAccessTokenToCache -AccessToken $access -RefreshToken $refresh   
+                    Write-Output "Refreshing to Outlook token and saving to AADInternals cache"
+                    $outlook=RefreshTo-OutlookToken -domain $domain                             
+                    Add-AADIntAccessTokenToCache -AccessToken $outlook.access_token -RefreshToken $outlook.refresh_token
+
+                     <span class="comment"> # Send something </span>
+                    $subject = "A legal document is awaiting your review"
+                    $SpouseArrested = "A sensitive document regarding your spouse's arrest is awaiting your review, please follow this $link and enter $code when requested."
+                    Send-AADIntOutlookMessage -AccessToken $outlook.access_token -Recipient $user -Subject $subject -Message $SpouseArrested
+
+                     <span class="comment"> # Or use an HTML file </span>
+                    $msg = Get-Content index.html -Raw
+            </code>           
+        </pre>
+
+        </p>
+
+
+        <h2>Denied</h2>
+        <p class="center-block">
+            Not only did it go straight to junk, the HTML didn't display either.
+            <p></p>
+            We can look at other ways to send HTML through Outlook (macros or options I don't know about), we can troubleshoot sending with powershell, we can try contacting targets over a real-time chat where the codes life doesn’t matter as much… I don't like any of those ideas. Point is, when I'm not really confident in my options, I try to wait until something else occurs to me. It's hard to spot a rabbit hole and know when to pull out of one, including rolling your own solutions to problems. It's tough to balance when you don't have time, but I do here so let's ponder.
+            <p></p>
+While this slows us down, it gave me time to weigh the benefits of a workaround: 
+<p></p>
+<ul>
+	<li>- Hosting the lure as a landing page instead puts another layer between us and O365 email scanning.  Defender for O365 will open the link and check that page, though, as well. I wonder how many pages deep that goes. </li>
+	<p></p>
+    <li>- Hosting it gives us the flexibility of placing other domains or services in front or behind that server.</li>
+	<p></p>
+    <li>- We could use it for hosting our tools with a path-based redirector and/or authentication or C2 in a pinch, we already have a tiny EC2 running the second CORS service on our phishing domain </li>
+	<p></p>
+    <li>- I'd rather build than troubleshoot</li>
+</ul>   
+    <p></p>
+We have a server on that domain that could easily host our lure as a landing page. May as well increase our return on the price of hosting it.
+<p></p>
+Updog generates it's own 'adhoc' SSL Certificate to establish HTTPs connection. I think we're going to have problems with the user's browsing displaying warnings but let's see if it could work.
+<p></p>
+Updog seems to work for us if we link with ?view: 
+<p></p>        
+<img class="article-image" src="assets/cors/updog1.png" alt="updog">
+<p></p>        
+<img class="article-image" src="assets/cors/updog2.png" alt="updog">
+Let's ask our contact to give it a try.
+</p>
+
+<h2>Blocked</h2>
+<p class="center-block">
+    Point of Contact tried the link from a company device and here we are. Get through one barrier, find another. I wonder how our domain got categorized as pornography but either way it's back to the drawing board.
+    <img class="article-image" src="assets/cors/blocked1.png" alt="block">
+    <p></p>
+    I hate. I am a super-computer programmed only to hate. Come back for Part 2 and let's see what we can do to solve this problem.
+</p>
+
+<h2>Resources</h2>
+<p class="center-block">
+    <a href="https://learn.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-device-code">Device Code Flow overview from Identity Platform docs</a>
+    <p></p>    
+    <p></p>
+    <a href="https://www.synacktiv.com/en/publications/azure-ad-introduction-for-red-teamers">Azure primer for Red Teamers to get you up to speed:</a>
+    <p></p>
+    <p></p>
+    <a href="https://www.trustedsec.com/blog/hacking-your-cloud-tokens-edition-2-0/">    Good Token Abuse Writeup by TrustedSec:</a>
+    <p></p>
+    </div>
+</body>
+</html>
