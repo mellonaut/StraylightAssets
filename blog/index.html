@@ -5,18 +5,30 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #333;  /* Dark grey background */
+            color: #fff;  /* White text color */
         }
         .thumbnail {
             width: 100px; /* Adjust width as needed */
             height: 100px; /* Adjust height as needed */
-            border: 1px solid #000; /* Optional, for a border around the image */
+            /* border: 1px solid #000; Optional, for a border around the image */
             object-fit: cover; /* Ensures the aspect ratio of the image is maintained */
+        }
+        .social-box {
+            width: 300px; /* Adjust width as needed */
+            margin: 0 auto; /* Centers the box */
+            padding: 20px;
+            background-color: #fff; /* White background color */
+            color: #000; /* Black text color */
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.19), 0px 6px 6px rgba(0, 0, 0, 0.23);
+            text-align: center; /* Aligns text to center */
+            border-radius: 10px; /* Optional, to make the box corners rounded */
         }
         p.center-block {
             width: 50%;  /* or any width */
             margin: auto;
             text-align: center;
-            border: 1px solid black;  /* Optional, to visualize the block */
+            /* border: 1px solid black;  Optional, to visualize the block */
             padding: 10px;  /* Optional, to add some space around the text */
         }
         .top-banner {
@@ -53,6 +65,10 @@
             background-color: #ddd;
             color: black;
         }
+        .content {
+            width: 100%;
+            text-align: center; /* Added this to center all text within the content div */
+        }
     </style>
 </head>
 <body>
@@ -72,11 +88,18 @@
         <a href="code.html">Code</a>
         <a href="posts.html">Posts</a>
     </div>
+
     <div class="content">
-        <h2>Articles</h2>        
-            <img class="thumbnail" src="assets/corsandcapture1-final.png" alt="Thumbnail Image">
-                <a href="corsandcapture1.html">CORS and Capture Part 1: Self-Hosting a CORS Proxy for Device Code Phishing</a>
-            <!-- More articles go here -->        
+        <img class="thumbnail" src="assets/currentlogo_straylight_darkfox2.png" alt="Thumbnail Image">
+        <p class="center-block">
+            Articles 
+        </p>
+    </div>
+    <div class="social-box">
+        <!-- <h3>Posts</h3> -->
+        <h4>6/18/2023</h4>
+        <img class="thumbnail" src="assets/corsandcapture1-final.png" alt="Thumbnail Image">
+        <p><a href="corsandcapture1.html">CORS and Capture Part 1: Self-Hosting a CORS proxy for Device Code Phishing</a></p>
     </div>
 </body>
 </html>
