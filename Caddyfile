@@ -1,0 +1,6 @@
+blog.straylightsecurity.com {
+    tls {
+        http
+    }
+    reverse_proxy localhost:8443
+}
