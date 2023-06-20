@@ -55,11 +55,10 @@ p.center-block {
 }
 
 .navbar {
-    background-color: #333;
+    background-color: #867b7b;
     overflow: hidden;
     margin-bottom: 20px;
 }
-
 .navbar a {
     float: left;
     display: block;
@@ -69,10 +68,22 @@ p.center-block {
     padding: 14px 16px;
     text-decoration: none;
 }
-
 .navbar a:hover {
     background-color: #ddd;
     color: black;
+}
+.content {
+    width: 100%;
+    text-align: center; /* Added this to center all text within the content div */
+}
+.text-box {
+    width: 400px; /* Adjust width as needed */
+    margin: 0 auto; /* Centers the box */
+    padding: 20px;
+    background-color: #f2f2f2; /* Light grey background color */
+    color: #000; /* Black text color */
+    text-align: center; /* Aligns text to center */
+    border-radius: 10px; /* Optional, to make the box corners rounded */
 }
 
 .code-snippet {

@@ -38,7 +38,7 @@
             color: #fff;
         }
         .navbar {
-            background-color: #333;
+            background-color: #867b7b;
             overflow: hidden;
             margin-bottom: 20px;
         }
@@ -79,6 +79,15 @@
             display: block;
             margin: 20px auto;
         }
+        .text-box {
+            width: 80%; /* Adjust width as needed */
+            margin: 0 auto; /* Centers the box */
+            padding: 20px;
+            background-color: #f3f1f1;; /* Light grey background color */
+            color: #000; /* Black text color */
+            text-align: center; /* Aligns text to center */
+            border-radius: 10px; /* Optional, to make the box corners rounded */
+        }
     </style>
 </head>
 <body>
@@ -99,19 +108,33 @@
     </div>
     <div class="content">
         <img class="article-image" src="assets/corsandcapture1-final.png" alt="Article Image">
-        <h2>The Goal</h2>
+        <!-- <h2>The Goal</h2>
         <p class="center-block">
             I decided to focus on device codes as a reliable means of initial access and spent a lot of time working out ways to make it more flexible. Generated device codes only live for 15 minutes and it became clear fairly quickly that this limitation was worth stopping what I was doing and taking the time to get a better solution in place. 
         If we can get an access token for the MS Graph, we can use that token to create a Primary Refresh Token for that user. Access tokens are short lived but are refreshed by…you guesed it. With a PRT in hand, we can then refresh our token to each service in O365 that we want to interact with, i.e. Teams, EXO, Sharepoint and loot whatever want. 
         This makes automation a breeze and there's a loot script here you can use. Access may be short lived in an environment with sharp analysts or good automation so the goal is to get a long lasting PRT and as much org recon and user data as possible. 
         If you're wondering what all these tokens we're talking about are you can check out <a href="https://learn.microsoft.com/en-us/azure/active-directory/devices/concept-primary-refresh-token">this PRT Documentation</a> which should get you up to speed.
-        </p>
+        </p> -->
         
-        <h2>The Problem</h2>
+        <div class="text-box">
+            <p class="center-block">
+                <h2>The Goal</h2>
+                I decided to focus on device codes as a reliable means of initial access and spent a lot of time working out ways to make it more flexible. Generated device codes only live for 15 minutes and it became clear fairly quickly that this limitation was worth stopping what I was doing and taking the time to get a better solution in place. 
+                If we can get an access token for the MS Graph, we can use that token to create a Primary Refresh Token for that user. Access tokens are short lived but are refreshed by…you guessed it. With a PRT in hand, we can then refresh our token to each service in O365 that we want to interact with, i.e. Teams, EXO, Sharepoint and loot whatever want. 
+                This makes automation a breeze and there's a loot script here you can use. Access may be short lived in an environment with sharp analysts or good automation, so the goal is to get a long-lasting PRT and as much org recon and user data as possible. 
+                If you're wondering what all these tokens we're talking about are, you can check out <a href="https://learn.microsoft.com/en-us/azure/active-directory/devices/concept-primary-refresh-token">this PRT Documentation</a>, which should get you up to speed.
+            </p>
+        </div>
+        <p></p>
+        <p></p>
+        <div class="text-box">        
         <p class="center-block">
+            <h2>The Problem</h2>
         Device codes are only active for 15 minutes, which means our lures are short-lived or the user has to request another code from us. We have been using a template in Outlook and sending it to individual users. We will try to make that work, and will explore hosting the lure as a landing page. This gives the added benefit of tracking click-rate even if the user chooses not to enter the code.</p>
         </p>
-
+    </div>
+    <p></p>
+    <div class="text-box">
         <h2>The Template</h2>
         <p class="center-block">
             If you open your lure in VS Code and install the  live server extension:
@@ -137,6 +160,7 @@
             <img class="article-image" src="assets/cors/template5.png" alt="Bluebeam Template">
             <p></p>
         </p>
+    </div>
 
         <h2>The Idea</h2>
         <p class="center-block">
